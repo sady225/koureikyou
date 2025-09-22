@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>パスワード付きフォトアルバム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+        .tab-button.active {
+            background-color: #60a5fa;
+            color: white;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- ログインコンテナ -->
+    <div id="auth-container" class="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm text-center transition-all duration-300">
+        <h1 class="text-2xl font-bold mb-6">パスワードを入力してください</h1>
+        <input type="password" id="password-input" class="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="パスワード">
+        <button id="login-button" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-300">ログイン</button>
+        <p id="error-message" class="text-red-500 mt-4 hidden">パスワードが間違っています。</p>
+    </div>
+
+    <!-- アルバムコンテナ -->
+    <div id="album-container" class="hidden w-full max-w-4xl p-4 transition-all duration-300">
+        <h1 class="text-3xl font-bold text-center mb-6">私のフォトアルバム</h1>
+
+        <!-- タブボタン -->
+        <div class="flex justify-center mb-6 space-x-2">
+            <button id="ceremony-tab" class="tab-button px-6 py-2 rounded-full border border-gray-300 transition-colors duration-200 hover:bg-gray-200">式典</button>
+            <button id="reception-tab" class="tab-button px-6 py-2 rounded-full border border-gray-300 transition-colors duration-200 hover:bg-gray-200">受付</button>
+        </div>
+
+        <!-- 写真グリッドコンテナ -->
+        <div id="photo-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <!-- 写真がここに動的に追加されます -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const authContainer = document.getElementById('auth-container');
+            const albumContainer = document.getElementById('album-container');
+            const passwordInput = document.getElementById('password-input');
+            const loginButton = document.getElementById('login-button');
+            const errorMessage = document.getElementById('error-message');
+            const photoGrid = document.getElementById('photo-grid');
+            const ceremonyTab = document.getElementById('ceremony-tab');
+            const receptionTab = document.getElementById('reception-tab');
+
+            // 写真のファイル名リスト
+            const photos = {
+                ceremony: [
+                    'S__56573987_0.jpg',
+                    'S__56573988_0.jpg',
+                    'S__56573990_0.jpg',
+                    'S__56573991_0.jpg',
+                    'S__56573992_0.jpg',
+                    'S__56573993_0.jpg',
+                    'S__56573994_0.jpg',
+                    'S__56573995_0.jpg',
+                    'S__179454036_0.jpg',
+                    'S__179454037_0.jpg',
+                    'S__179454038_0.jpg',
+                    'S__179454039_0.jpg',
+                    'S__179454040_0.jpg',
+                    'S__179454041_0.jpg',
+                    'S__179454042_0.jpg',
+                    'S__179454044_0.jpg',
+                    'S__179454045_0.jpg',
+                    'S__179454046_0.jpg',
+                    'S__179454047_0.jpg',
+                    'S__179454048_0.jpg',
+                    'S__179454049_0.jpg',
+                    'S__179454050_0.jpg',
+                    'S__179454051_0.jpg',
+                    'S__179454052_0.jpg',
+                    'S__179454053_0.jpg',
+                    'S__179454055_0.jpg',
+                    'S__179454056_0.jpg',
+                    'S__179454057_0.jpg',
+                    'S__179454058_0.jpg',
+                    'S__179454059_0.jpg',
+                    'S__179454060_0.jpg',
+                    'S__179454061_0.jpg',
+                    'S__179454062_0.jpg',
+                    'S__179454063_0.jpg',
+                    'S__179454064_0.jpg',
+                    'S__179454066_0.jpg',
+                    'S__179454067_0.jpg',
+                    'S__179454068_0.jpg',
+                    'S__179454069_0.jpg'
+                ],
+                reception: [
+                    'S__56573966_0.jpg',
+                    'S__56573968_0.jpg',
+                    'S__56573969_0.jpg',
+                    'S__56573970_0.jpg',
+                    'S__56573971_0.jpg',
+                    'S__56573972_0.jpg',
+                    'S__56573973_0.jpg',
+                    'S__56573974_0.jpg',
+                    'S__56573975_0.jpg',
+                    'S__56573976_0.jpg',
+                    'S__56573977_0.jpg',
+                    'S__56573979_0.jpg',
+                    'S__56573980_0.jpg',
+                    'S__56573981_0.jpg',
+                    'S__56573982_0.jpg',
+                    'S__56573983_0.jpg',
+                    'S__56573984_0.jpg',
+                    'S__56573985_0.jpg',
+                    'S__56573986_0.jpg'
+                ]
+            };
+
+            // パスワードをここに設定してください
+            const correctPassword = 'mysecretpassword';
+
+            let currentCategory = 'ceremony';
+
+            loginButton.addEventListener('click', () => {
+                const enteredPassword = passwordInput.value;
+                if (enteredPassword === correctPassword) {
+                    showAlbum();
+                } else {
+                    errorMessage.classList.remove('hidden');
+                }
+            });
+
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    loginButton.click();
+                }
+            });
+
+            ceremonyTab.addEventListener('click', () => {
+                currentCategory = 'ceremony';
+                updateTabs();
+                renderPhotos();
+            });
+
+            receptionTab.addEventListener('click', () => {
+                currentCategory = 'reception';
+                updateTabs();
+                renderPhotos();
+            });
+
+            function showAlbum() {
+                authContainer.classList.add('hidden');
+                albumContainer.classList.remove('hidden');
+                updateTabs();
+                renderPhotos();
+            }
+
+            function updateTabs() {
+                ceremonyTab.classList.remove('active');
+                receptionTab.classList.remove('active');
+                if (currentCategory === 'ceremony') {
+                    ceremonyTab.classList.add('active');
+                } else {
+                    receptionTab.classList.add('active');
+                }
+            }
+
+            function renderPhotos() {
+                photoGrid.innerHTML = ''; // グリッドをクリア
+                const photoList = photos[currentCategory];
+                
+                const folderPath = `./${currentCategory === 'ceremony' ? '式典' : '受付'}/`;
+
+                photoList.forEach(photo => {
+                    const imgContainer = document.createElement('div');
+                    imgContainer.classList.add('overflow-hidden', 'rounded-xl', 'shadow-md');
+
+                    const img = document.createElement('img');
+                    img.src = folderPath + photo;
+                    img.alt = `Album Photo: ${photo}`;
+                    img.classList.add('w-full', 'h-auto', 'object-cover', 'transition-transform', 'duration-300', 'hover:scale-105');
+
+                    imgContainer.appendChild(img);
+                    photoGrid.appendChild(imgContainer);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
